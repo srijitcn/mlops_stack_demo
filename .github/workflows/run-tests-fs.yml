@@ -172,6 +172,7 @@ jobs:
           echo ${{steps.integration-test-content.outputs.result}} > test.json 
           cat test.json
           echo "=========5"
+          
           databricks runs submit --json-file test.json --wait > tmp-output.json
           echo "=========6"
           # We want to extract the run id as it's useful to show in the Github UI (as a comment).
