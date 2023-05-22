@@ -68,6 +68,10 @@ model_name = dbutils.widgets.get("model_name")
 
 # DBTITLE 1, Set experiment
 import mlflow
+try:
+    mlflow.create_experiment(experiment_name)
+except:
+    print(f"Experiment {experiment_name} already exists")
 
 mlflow.set_experiment(experiment_name)
 
