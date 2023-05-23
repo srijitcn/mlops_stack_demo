@@ -148,6 +148,7 @@ jobs:
       - name: Create Comment with Training Model Output
         uses: actions/github-script@v6
         id: comment
+        permissions: write-all
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
