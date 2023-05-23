@@ -8,7 +8,7 @@ on:
 env:
   DATABRICKS_HOST: https://adb-8590162618558854.14.azuredatabricks.net
   NODE_TYPE_ID: Standard_D3_v2
-  
+  DATABRICKS_TOKEN: ${{secrets.DB_TOKEN}}
 
 concurrency: mlops_stack_demo-feature-training-integration-test-staging
 
@@ -42,8 +42,6 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
-      - name: Generate AAD Token
-        run: ./.github/workflows/scripts/generate-aad-token.sh ${{ secrets.stagingAzureSpTenantId }} ${{ secrets.stagingAzureSpApplicationId }} ${{ secrets.stagingAzureSpClientSecret }}
       # This step populates a JSON Databricks job payload that will be submitted as an integration test run.
       # It currently builds a one-off multi-task job that contains feature engineering tasks to populate Feature
       # Store tables, and a training task that uses those tables. 
@@ -71,19 +69,7 @@ jobs:
                     "primary_keys": "zip"
                   }
                 },
-                "new_cluster": {
-                  "spark_version": "11.0.x-cpu-ml-scala2.12",
-                  "node_type_id": "${{ env.NODE_TYPE_ID }}",
-                  "num_workers": 0,
-                  "spark_conf": {
-                    "spark.databricks.cluster.profile": "singleNode",
-                    "spark.master": "local[*, 4]"
-                  },
-                  "custom_tags": {
-                    "ResourceClass": "SingleNode",
-                    "clusterSource": "mlops-stack/0.0"
-                  }
-                }
+                "existing_cluster_id": "0517-125649-lunpexbd"
               },
               {
                 "task_key": "dropoff-features",
@@ -97,19 +83,7 @@ jobs:
                     "primary_keys": "zip"
                   }
                 },
-                "new_cluster": {
-                  "spark_version": "11.0.x-cpu-ml-scala2.12",
-                  "node_type_id": "${{ env.NODE_TYPE_ID }}",
-                  "num_workers": 0,
-                  "spark_conf": {
-                    "spark.databricks.cluster.profile": "singleNode",
-                    "spark.master": "local[*, 4]"
-                  },
-                  "custom_tags": {
-                    "ResourceClass": "SingleNode",
-                    "clusterSource": "mlops-stack/0.0"
-                  }
-                }
+                "existing_cluster_id": "0517-125649-lunpexbd"
               },
               {
                 "task_key": "training",
@@ -132,19 +106,7 @@ jobs:
                     "dropoff_features_table": "feature_store_taxi_example.trip_dropoff_features_test"
                   }
                 },
-                "new_cluster": {
-                  "spark_version": "11.0.x-cpu-ml-scala2.12",
-                  "node_type_id": "${{ env.NODE_TYPE_ID }}",
-                  "num_workers": 0,
-                  "spark_conf": {
-                    "spark.databricks.cluster.profile": "singleNode",
-                    "spark.master": "local[*, 4]"
-                  },
-                  "custom_tags": {
-                    "ResourceClass": "SingleNode",
-                    "clusterSource": "mlops-stack/0.0"
-                  }
-                }
+                "existing_cluster_id": "0517-125649-lunpexbd"
               }
             ],
             "git_source": {
@@ -164,20 +126,30 @@ jobs:
         id: features-training-integration-test
         run: |
           python -m pip install --upgrade pip
+          echo "=========1"
           pip3 install --upgrade requests
+          echo "=========2"
           pip install databricks-cli
+          echo "=========3"
           databricks jobs configure --version=2.1
+          echo "=========4"
           echo ${{steps.integration-test-content.outputs.result}} > test.json 
+          cat test.json
+          echo "=========5"
+          
           databricks runs submit --json-file test.json --wait > tmp-output.json
+          echo "=========6"
           # We want to extract the run id as it's useful to show in the Github UI (as a comment).
           head -3  tmp-output.json  | jq '.run_id'  > run-id.json
+          echo "=========7"
           databricks runs get --run-id "$(cat run-id.json)" | jq -r '.run_page_url' > run-page-url.json
+          echo "=========8"
           echo "run-url=$(cat run-page-url.json)" >> "$GITHUB_OUTPUT"
       - name: Create Comment with Training Model Output
         uses: actions/github-script@v6
         id: comment
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.PAT }}
           script: |
             const output = `
             The training integration test run is available [here](${{ steps.features-training-integration-test.outputs.run-url }}).`

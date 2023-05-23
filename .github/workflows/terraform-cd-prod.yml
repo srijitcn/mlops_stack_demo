@@ -22,9 +22,6 @@ jobs:
       DATABRICKS_HOST: https://adb-8590162618558854.14.azuredatabricks.net
       
     steps:
-      - uses: actions/checkout@v3
-      - name: Generate AAD Token
-        run: ../../.github/workflows/scripts/generate-aad-token.sh ${{ secrets.prodAzureSpTenantId }} ${{ secrets.prodAzureSpApplicationId }} ${{ secrets.prodAzureSpClientSecret }}
       - uses: hashicorp/setup-terraform@v1
       - name: Terraform fmt
         id: fmt

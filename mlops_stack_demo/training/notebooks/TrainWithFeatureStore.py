@@ -68,6 +68,7 @@ model_name = dbutils.widgets.get("model_name")
 
 # DBTITLE 1, Set experiment
 import mlflow
+import os
 
 mlflow.set_experiment(experiment_name)
 
